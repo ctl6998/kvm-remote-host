@@ -1,0 +1,13 @@
+---
+- name: Execute generate script on master
+  hosts: master                   # Target the master host
+  remote_user: ubuntu              # Replace with your actual user if different
+  become: yes                      # Use sudo to execute tasks with elevated privileges
+  tasks:
+    - name: Execute generate.sh with dynamic file input
+      shell: |
+        sudo -u ubuntu /usr/bin/bash -ilc '/home/ubuntu/generate.sh filesample.txt 21'
+      args:
+        chdir: /home/ubuntu/
+      environment:
+        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

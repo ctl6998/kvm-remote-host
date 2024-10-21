@@ -1,0 +1,50 @@
+---
+- name: Install JDK, Hadoop, and Spark on Ubuntu cluster nodes
+  hosts: all
+  become: yes  # Use this if you need sudo privileges
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - openjdk-8-jdk
+          - wget
+          - tar
+        state: present
+        update_cache: yes
+
+    - name: Download Hadoop 2.7.1
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/hadoop-2.7.1.tar.gz
+        dest: /tmp/hadoop-2.7.1.tar.gz
+
+    - name: Extract Hadoop
+      unarchive:
+        src: /tmp/hadoop-2.7.1.tar.gz
+        dest: /opt/
+        remote_src: yes
+
+    - name: Download Spark 2.4.3
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/spark-2.4.3-bin-hadoop2.7.tgz
+        dest: /tmp/spark-2.4.3-bin-hadoop2.7.tgz
+
+    - name: Extract Spark
+      unarchive:
+        src: /tmp/spark-2.4.3-bin-hadoop2.7.tgz
+        dest: /opt/
+        remote_src: yes
+
+    - name: Set environment variables for Hadoop and Spark
+      lineinfile:
+        path: /etc/profile.d/hadoop_spark.sh
+        line: |
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+          export HADOOP_HOME=/opt/hadoop-2.7.1
+          export SPARK_HOME=/opt/spark-2.4.3-bin-hadoop2.7
+          export PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$SPARK_HOME/bin
+        create: yes
+
+    - name: Make the script executable
+      file:
+        path: /etc/profile.d/hadoop_spark.sh
+        mode: '0755'

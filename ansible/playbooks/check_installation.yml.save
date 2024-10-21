@@ -1,0 +1,17 @@
+---
+- name: Verify JDK, Hadoop, and Spark installations
+  hosts: spark_cluster
+  gather_facts: no
+  tasks:
+    - name: Check Java version
+      command: java -version
+      register: java_version
+      ignore_errors: yes  # To continue even if the command fails
+
+    - name: Display Java version
+      debug:
+        msg: "{{ java_version.stdout_lines }}"
+
+    - name: Check Hadoop version
+      command: hadoop version
+  

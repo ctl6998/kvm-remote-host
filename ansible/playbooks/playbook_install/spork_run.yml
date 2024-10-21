@@ -1,0 +1,37 @@
+---
+- name: Replace Hadoop anfilesuration files across all VMs
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Update JAVA_HOME in hadoop-env.sh
+      lineinfile:
+        path: "/home/ubuntu/install/hadoop-2.7.1/etc/hadoop/hadoop-env.sh"
+        regexp: '^export JAVA_HOME='
+        line: 'export JAVA_HOME=/home/ubuntu/install/jdk1.8.0_202'
+        state: present
+
+    - name: Replace core-site.xml
+      copy:
+        src: "files/core-site.xml"  # Relative path to the updated file
+        dest: /home/ubuntu/install/hadoop-2.7.1/etc/hadoop/core-site.xml
+        mode: '0644'
+
+    - name: Replace hdfs-site.xml
+      copy:
+        src: "files/hdfs-site.xml"  # Relative path to the updated file
+        dest: /home/ubuntu/install/hadoop-2.7.1/etc/hadoop/hdfs-site.xml
+        mode: '0644'
+
+    - name: Replace Hadoop slaves file
+      copy:
+        src: "files/slaves"  # Relative path to the updated file
+        dest: /home/ubuntu/install/hadoop-2.7.1/etc/hadoop/slaves
+        mode: '0644'
+
+    - name: Replace Spark slaves file
+      copy:
+        src: "files/slaves"  # Relative path to the updated file for Spark
+        dest: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7/conf/slaves
+        mode: '0644'
+

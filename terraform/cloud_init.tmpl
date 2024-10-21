@@ -1,0 +1,33 @@
+#cloud-config
+hostname: ${hostname}
+ssh_pwauth: True
+disable_root: false
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin
+    home: /home/ubuntu
+    shell: /bin/bash
+    lock_passwd: false
+    ssh-authorized-keys:
+      - ${ssh_pub_key}
+
+network:
+  version: 2
+  ethernets:
+    ens3:
+      dhcp4: false
+      optional: false
+      addresses:
+        - ${ip_address}
+      gateway4: ${gateway}
+      nameservers:
+        addresses: ${jsonencode(dns_servers)}
+      match:
+        macaddress: "${mac_address}"
+      set-name: ens3
+
+growpart:
+  devices: [/]
+  ignore_growroot_disabled: false 
+  mode: auto

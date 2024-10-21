@@ -1,0 +1,34 @@
+---
+- name: Mount NFS share from master to control node
+  hosts: controlnode
+  become: yes
+  vars:
+    master_ip: "192.168.122.100"
+    mount_point: "/mnt/nfs_share"
+    nfs_export: "/path/to/nfs_export"  # Adjust this to the actual NFS export path
+
+  tasks:
+    - name: Ensure the mount point directory exists
+      file:
+        path: "{{ mount_point }}"
+        state: directory
+
+    - name: Install NFS client
+      package:
+        name: nfs-utils  # Use 'nfs-common' on Debian-based systems
+        state: present
+
+    - name: Mount NFS share
+      mount:
+        path: "{{ mount_point }}"
+        src: "{{ master_ip }}:{{ nfs_export }}"
+        fstype: nfs
+        state: mounted
+
+    - name: Ensure NFS share is mounted on boot
+      mount:
+        path: "{{ mount_point }}"
+        src: "{{ master_ip }}:{{ nfs_export }}"
+        fstype: nfs
+        state: present
+        opts: defaults

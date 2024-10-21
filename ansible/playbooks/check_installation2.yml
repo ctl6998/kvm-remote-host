@@ -1,0 +1,44 @@
+---
+- name: Verify JDK, Hadoop, and Spark installations
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Check Java version
+      command: java -version
+      register: java_version
+      ignore_errors: yes
+
+    - name: Display Java version
+      debug:
+        msg: 
+          - "Java Output: {{ java_version.stdout_lines }}"
+          - "Java Error: {{ java_version.stderr }}"
+          - "Return Code: {{ java_version.rc }}"
+
+    - name: Set PATH for Hadoop and Spark
+      lineinfile:
+        path: /etc/profile
+        line: 'export PATH=$PATH:/home/ubuntu/install/hadoop-2.7.1/bin:/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7/bin'
+        state: present
+      become: yes
+
+    - name: Check Hadoop version
+      command: /home/ubuntu/install/hadoop-2.7.1/bin/hadoop version
+      register: hadoop_version
+      ignore_errors: yes
+
+    - name: Display Hadoop version
+      debug:
+        msg: "{{ hadoop_version.stdout_lines }}"
+
+    - name: Check Spark version
+      command: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7/bin/spark-submit --version
+      register: spark_version
+      ignore_errors: yes
+
+    - name: Display Spark version
+      debug:
+        msg: 
+          - "Spark Output: {{ spark_version.stdout_lines }}"
+          - "Spark Error: {{ spark_version.stderr }}"
+          - "Return Code: {{ spark_version.rc }}"

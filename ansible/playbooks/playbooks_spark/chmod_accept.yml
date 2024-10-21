@@ -1,0 +1,15 @@
+---
+- name: Give permission for neccesary sh file on master
+  hosts: master                   # Target the master host
+  remote_user: ubuntu             # Replace with your actual user if different
+  become: yes                     # Use sudo to execute tasks with elevated privileges
+  tasks:
+    - name: Executing chmod commands
+      shell: |
+       sudo -u ubuntu /usr/bin/bash -ilc '/home/ubuntu/chmod.sh'
+      args:
+        chdir: /home/ubuntu/
+      environment:
+        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        #PATH: "/home/ubuntu/install/hadoop-2.7.1/bin/hdfs:/opt/spark-2.4.3-bin-hadoop2.7/bin/spark-submit"
+

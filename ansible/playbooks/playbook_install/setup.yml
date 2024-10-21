@@ -1,0 +1,220 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install OpenSSH server
+      apt:
+        name: openssh-server
+        state: present
+
+    - name: Ensure SSH service is running
+      service:
+        name: ssh
+        state: started
+        enabled: yes
+
+    - name: Ensure the .ssh directory exists
+      file:
+        path: /home/ubuntu/.ssh
+        state: directory
+        mode: '0700'
+        owner: ubuntu
+        group: ubuntu
+        
+    - name: Generate a common SSH key pair on the first VM
+      delegate_to: "{{ groups['master'][0] }}"
+      user:
+        name: ubuntu
+        generate_ssh_key: yes
+        ssh_key_file: /home/ubuntu/.ssh/id_rsa
+      when: inventory_hostname == groups['master'][0]
+      
+
+    - name: Fetch the id_rsa and id_rsa.pub files from the first VM
+      fetch:
+        src: /home/ubuntu/.ssh/id_rsa
+        dest: /tmp/id_rsa
+        flat: yes
+      delegate_to: "{{ groups['master'][0] }}"
+      when: inventory_hostname == groups['master'][0]
+
+    - name: Fetch the id_rsa.pub file from the first VM
+      fetch:
+        src: /home/ubuntu/.ssh/id_rsa.pub
+        dest: /tmp/id_rsa.pub
+        flat: yes
+      delegate_to: "{{ groups['master'][0] }}"
+      when: inventory_hostname == groups['master'][0]
+
+    - name: Copy id_rsa file to other VMs
+      copy:
+        src: /tmp/id_rsa
+        dest: /home/ubuntu/.ssh/id_rsa
+        mode: '0600'
+      when: inventory_hostname != groups['master'][0]
+
+    - name: Copy id_rsa.pub file to other VMs
+      copy:
+        src: /tmp/id_rsa.pub
+        dest: /home/ubuntu/.ssh/id_rsa.pub
+        mode: '0644'
+      when: inventory_hostname != groups['master'][0]
+
+    - name: Set permissions on authorized_keys file
+      file:
+        path: /home/ubuntu/.ssh/authorized_keys
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Append id_rsa.pub to authorized_keys
+      authorized_key:
+        user: ubuntu
+        state: present
+        key: "{{ lookup('file', '/tmp/id_rsa.pub') }}"
+    - name: Add custom SSH client configuration to ~/.ssh/config
+      blockinfile:
+        path: /home/ubuntu/.ssh/config
+        block: |
+          Host *
+              StrictHostKeyChecking no
+              PubkeyAuthentication yes
+              UserKnownHostsFile=/dev/null
+              PasswordAuthentication no
+              LogLevel QUIET
+        create: yes
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+
+    - name: Gather VM IPs and hostnames from inventory
+      set_fact:
+        vm_ips: "{{ ansible_play_hosts | map('extract', hostvars, 'ansible_host') | list }}"
+        vm_hostnames: "{{ ansible_play_hosts | map('extract', hostvars, 'inventory_hostname') | list }}"
+
+    - name: Generate host mapping entries
+      set_fact:
+        host_mapping_lines: "{{ host_mapping_lines | default([]) + [vm_ips[item] + ' ' + vm_hostnames[item]] }}"
+      loop: "{{ range(0, vm_ips | length) | list }}"
+
+    - name: Update /etc/hosts with VM mappings
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          {% for line in host_mapping_lines %}
+          {{ line }}
+          {% endfor %}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      become: true
+      
+    - name: Install dependencies
+      apt:
+        name: wget
+        state: present
+
+    - name: Create a directory for downloads
+      file:
+        path: /home/ubuntu/install
+        state: directory
+        mode: '0755'
+        
+    - name: Download JDK 8u202 from the URL
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/jdk-8u202-linux-x64.tar.gz
+        dest: /home/ubuntu/install/jdk-8u202-linux-x64.tar.gz
+        mode: '0644'
+
+    - name: Download Hadoop 2.7.1 from the URL
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/hadoop-2.7.1.tar.gz
+        dest: /home/ubuntu/install/hadoop-2.7.1.tar.gz
+        mode: '0644'
+
+    - name: Download Spark 2.4.3 from the URL
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/spark-2.4.3-bin-hadoop2.7.tgz
+        dest: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7.tgz
+        mode: '0644'
+
+    - name: Extract JDK archive
+      ansible.builtin.unarchive:
+        src: /home/ubuntu/install/jdk-8u202-linux-x64.tar.gz
+        dest: /home/ubuntu/install
+        remote_src: yes
+
+    - name: Extract Hadoop archive
+      ansible.builtin.unarchive:
+        src: /home/ubuntu/install/hadoop-2.7.1.tar.gz
+        dest: /home/ubuntu/install
+        remote_src: yes
+
+    - name: Extract Spark archive
+      ansible.builtin.unarchive:
+        src: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7.tgz
+        dest: /home/ubuntu/install
+        remote_src: yes
+
+    - name: Add environment variables to .rc
+      blockinfile:
+        path: /home/ubuntu/.bashrc
+        block: |
+          # Java environment variables
+          export JAVA_HOME=/home/ubuntu/install/jdk1.8.0_202
+          export PATH=$JAVA_HOME/bin:$PATH
+
+          # Hadoop environment variables
+          export HADOOP_HOME=/home/ubuntu/install/hadoop-2.7.1
+          export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH
+
+          # Spark environment variables
+          export SPARK_HOME=/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7
+          export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+        
+    - name: Remove JDK archive
+      file:
+        path: /home/ubuntu/install/jdk-8u202-linux-x64.tar.gz
+        state: absent  # Remove the archive after extraction
+    - name: Remove Hadoop archive
+      file:
+        path: /home/ubuntu/install/hadoop-2.7.1.tar.gz
+        state: absent
+    - name: Remove Spark archive
+      file:
+        path: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7.tgz
+        state: absent
+
+
+    - name: Add or update JAVA_HOME, HADOOP_HOME, SPARK_HOME in /etc/environment
+      lineinfile:
+        path: /etc/environment
+        create: yes
+        state: present
+        line: "{{ item }}"
+      with_items:
+        - 'JAVA_HOME="/home/ubuntu/install/jdk1.8.0_202"'
+        - 'HADOOP_HOME="/home/ubuntu/install/hadoop-2.7.1"'
+        - 'SPARK_HOME="/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7"'
+        - 'BASH_ENV="/etc/profile.d/loaded_env.sh"'
+        - 'ENV="/etc/profile.d/loaded_env.sh"'
+
+
+    - name: Add ubuntu user to sudoers with no password requirement
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^ubuntu ALL='
+        line: 'ubuntu ALL=(ALL) NOPASSWD:ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+
+    - name: Change ownership of /home/ubuntu/install to ubuntu
+      command: chown -R ubuntu:ubuntu /home/ubuntu/install
+
+    - name: Change permissions of /home/ubuntu/install to 755
+      command: chmod -R 755 /home/ubuntu/install
+
+    - name: Copy ENV
+      template: src=loaded_env.sh dest=/etc/profile.d/ mode=755
+
+    - name: Set ENV
+      shell: . /etc/profile.d/loaded_env.sh

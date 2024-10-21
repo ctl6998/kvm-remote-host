@@ -1,0 +1,9 @@
+---
+- name: Install Python on remote host
+  hosts: all                  # Target all hosts in your inventory
+  become: yes                 # Use sudo to execute tasks with elevated privileges
+  tasks:
+    - name: Ensure Python is installed
+      package:
+        name: python3         # Package name for Python 3
+        state: present        # Ensure the package is installed
