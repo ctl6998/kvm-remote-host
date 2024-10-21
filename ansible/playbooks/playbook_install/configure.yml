@@ -1,0 +1,219 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Checking SSH
+      apt:
+        name: openssh-server
+        state: present
+
+    - name: Configure and start SSH service
+      service:
+        name: ssh
+        state: started
+        enabled: yes
+
+    - name: Set up .ssh directory for ubuntu user
+      file:
+        path: /home/ubuntu/.ssh
+        state: directory
+        mode: '0700'
+        owner: ubuntu
+        group: ubuntu
+        
+    - name: Generate SSH key on master node
+      delegate_to: "{{ groups['master'][0] }}"
+      user:
+        name: ubuntu
+        generate_ssh_key: yes
+        ssh_key_file: /home/ubuntu/.ssh/id_rsa
+      when: inventory_hostname == groups['master'][0]
+      
+    - name: Private SSH key from master node
+      fetch:
+        src: /home/ubuntu/.ssh/id_rsa
+        dest: /tmp/id_rsa
+        flat: yes
+      delegate_to: "{{ groups['master'][0] }}"
+      when: inventory_hostname == groups['master'][0]
+
+    - name: Public SSH key from master node
+      fetch:
+        src: /home/ubuntu/.ssh/id_rsa.pub
+        dest: /tmp/id_rsa.pub
+        flat: yes
+      delegate_to: "{{ groups['master'][0] }}"
+      when: inventory_hostname == groups['master'][0]
+
+    - name: Distribute private SSH key to worker nodes
+      copy:
+        src: /tmp/id_rsa
+        dest: /home/ubuntu/.ssh/id_rsa
+        mode: '0600'
+      when: inventory_hostname != groups['master'][0]
+
+    - name: Distribute public SSH key to worker nodes
+      copy:
+        src: /tmp/id_rsa.pub
+        dest: /home/ubuntu/.ssh/id_rsa.pub
+        mode: '0644'
+      when: inventory_hostname != groups['master'][0]
+
+    - name: Set proper permissions for authorized_keys file
+      file:
+        path: /home/ubuntu/.ssh/authorized_keys
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Enable passwordless SSH access across cluster
+      authorized_key:
+        user: ubuntu
+        state: present
+        key: "{{ lookup('file', '/tmp/id_rsa.pub') }}"
+
+    - name: Access without password
+      blockinfile:
+        path: /home/ubuntu/.ssh/config
+        block: |
+          Host *
+              StrictHostKeyChecking no
+              PubkeyAuthentication yes
+              UserKnownHostsFile=/dev/null
+              PasswordAuthentication no
+              LogLevel QUIET
+        create: yes
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Collect cluster node information for hosts file
+      set_fact:
+        vm_ips: "{{ ansible_play_hosts | map('extract', hostvars, 'ansible_host') | list }}"
+        vm_hostnames: "{{ ansible_play_hosts | map('extract', hostvars, 'inventory_hostname') | list }}"
+
+    - name: Prepare host mapping entries
+      set_fact:
+        host_mapping_lines: "{{ host_mapping_lines | default([]) + [vm_ips[item] + ' ' + vm_hostnames[item]] }}"
+      loop: "{{ range(0, vm_ips | length) | list }}"
+
+    - name: Update /etc/hosts with cluster node mappings
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          {% for line in host_mapping_lines %}
+          {{ line }}
+          {% endfor %}
+        marker: "# {mark} ANSIBLE MANAGED BLOCK"
+      become: true
+      
+    - name: Install wget for software downloads
+      apt:
+        name: wget
+        state: present
+
+    - name: Create directory for software installations
+      file:
+        path: /home/ubuntu/install
+        state: directory
+        mode: '0755'
+        
+    - name: Download JDK 8u202
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/jdk-8u202-linux-x64.tar.gz
+        dest: /home/ubuntu/install/jdk-8u202-linux-x64.tar.gz
+        mode: '0644'
+
+    - name: Download Hadoop 2.7.1
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/hadoop-2.7.1.tar.gz
+        dest: /home/ubuntu/install/hadoop-2.7.1.tar.gz
+        mode: '0644'
+
+    - name: Download Spark 2.4.3
+      get_url:
+        url: https://sd-160040.dedibox.fr/hagimont/software/spark-2.4.3-bin-hadoop2.7.tgz
+        dest: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7.tgz
+        mode: '0644'
+
+    - name: Extract JDK 8u202
+      ansible.builtin.unarchive:
+        src: /home/ubuntu/install/jdk-8u202-linux-x64.tar.gz
+        dest: /home/ubuntu/install
+        remote_src: yes
+
+    - name: Extract Hadoop 2.7.1
+      ansible.builtin.unarchive:
+        src: /home/ubuntu/install/hadoop-2.7.1.tar.gz
+        dest: /home/ubuntu/install
+        remote_src: yes
+
+    - name: Extract Spark 2.4.3
+      ansible.builtin.unarchive:
+        src: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7.tgz
+        dest: /home/ubuntu/install
+        remote_src: yes
+
+    - name: Set up environment variables in .bashrc
+      blockinfile:
+        path: /home/ubuntu/.bashrc
+        block: |
+          # Java environment variables
+          export JAVA_HOME=/home/ubuntu/install/jdk1.8.0_202
+          export PATH=$JAVA_HOME/bin:$PATH
+
+          # Hadoop environment variables
+          export HADOOP_HOME=/home/ubuntu/install/hadoop-2.7.1
+          export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH
+
+          # Spark environment variables
+          export SPARK_HOME=/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7
+          export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin
+        
+    - name: Clean up JDK installation archive
+      file:
+        path: /home/ubuntu/install/jdk-8u202-linux-x64.tar.gz
+        state: absent
+
+    - name: Clean up Hadoop installation archive
+      file:
+        path: /home/ubuntu/install/hadoop-2.7.1.tar.gz
+        state: absent
+
+    - name: Clean up Spark installation archive
+      file:
+        path: /home/ubuntu/install/spark-2.4.3-bin-hadoop2.7.tgz
+        state: absent
+
+    - name: Set system-wide environment variables
+      lineinfile:
+        path: /etc/environment
+        create: yes
+        state: present
+        line: "{{ item }}"
+      with_items:
+        - 'JAVA_HOME="/home/ubuntu/install/jdk1.8.0_202"'
+        - 'HADOOP_HOME="/home/ubuntu/install/hadoop-2.7.1"'
+        - 'SPARK_HOME="/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7"'
+        - 'BASH_ENV="/etc/profile.d/loaded_env.sh"'
+        - 'ENV="/etc/profile.d/loaded_env.sh"'
+
+    - name: Configure sudo access for ubuntu user
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^ubuntu ALL='
+        line: 'ubuntu ALL=(ALL) NOPASSWD:ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+
+    - name: Set ownership of installation directory
+      command: chown -R ubuntu:ubuntu /home/ubuntu/install
+
+    - name: Set permissions for installation directory
+      command: chmod -R 755 /home/ubuntu/install
+
+    - name: Deploy environment setup script
+      template: src=loaded_env.sh dest=/etc/profile.d/ mode=755
+
+    - name: Load environment setup script
+      shell: . /etc/profile.d/loaded_env.sh

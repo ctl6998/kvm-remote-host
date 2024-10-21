@@ -11,7 +11,7 @@ We implemented an infrastructure service for the automatic deployment of a Big D
 
 ### Clone the project:
 ```
-git clone https://github.com/ctl6998/ProjectInfrastructure.git
+git clone https://github.com/ctl6998/kvm-remote-host.git
 ```
 
 ### Install environment packages:
@@ -22,7 +22,7 @@ cd kvm-remote-host/
 
 ### Run bash script:
 ```
-start.sh <number_of_slave> <jar_file_location> <data_file_location>
+./start.sh <number_of_slave> <jar_file_location> <data_file_location>
 ```
 
 #### Parameter Explanation:

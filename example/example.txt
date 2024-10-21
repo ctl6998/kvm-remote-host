@@ -1,0 +1,543 @@
+Initializing Terraform...
+
+Initializing the backend...
+
+Initializing provider plugins...
+- Using previously-installed dmacvicar/libvirt v0.6.2
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+Applying Terraform configuration...
+libvirt_pool.vm_pool: Creating...
+libvirt_pool.vm_pool: Creation complete after 5s [id=cb6199a1-2bff-437a-9a61-88b1440bb853]
+libvirt_volume.ubuntu_base_image: Creating...
+libvirt_cloudinit_disk.commoninit[2]: Creating...
+libvirt_cloudinit_disk.commoninit[0]: Creating...
+libvirt_cloudinit_disk.commoninit[1]: Creating...
+libvirt_volume.ubuntu_base_image: Creation complete after 0s [id=/home/ubuntu/kvm-remote-host/kvm/pool1/ubuntu-22.04-server-cloudimg-amd64-disk-kvm.img]
+libvirt_volume.vm_disk[0]: Creating...
+libvirt_volume.vm_disk[2]: Creating...
+libvirt_cloudinit_disk.commoninit[2]: Creation complete after 0s [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-2.iso;671665cf-f707-7131-5c70-824cfefbee0b]
+libvirt_volume.vm_disk[1]: Creating...
+libvirt_cloudinit_disk.commoninit[0]: Creation complete after 0s [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-0.iso;671665cf-e211-f07d-5660-675f95dd8f71]
+libvirt_cloudinit_disk.commoninit[1]: Creation complete after 0s [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-1.iso;671665cf-334f-fe8b-dbbb-24849345cb12]
+libvirt_volume.vm_disk[0]: Creation complete after 1s [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-0.qcow2]
+libvirt_volume.vm_disk[2]: Creation complete after 1s [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-2.qcow2]
+libvirt_volume.vm_disk[1]: Creation complete after 1s [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-1.qcow2]
+libvirt_domain.vm[1]: Creating...
+libvirt_domain.vm[2]: Creating...
+libvirt_domain.vm[0]: Creating...
+libvirt_domain.vm[0]: Creation complete after 1s [id=98954691-b8ee-497a-ae08-11e075e922a3]
+libvirt_domain.vm[2]: Creation complete after 1s [id=4d4e3a1d-3564-4a2d-a96a-eaf0a26ec438]
+libvirt_domain.vm[1]: Creation complete after 1s [id=5532233a-9557-4657-a2ad-542bd60b52a7]
+
+Apply complete! Resources: 11 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+ips = [
+  "192.168.122.100",
+  "192.168.122.101",
+  "192.168.122.102",
+]
+vm_details = [
+  {
+    "hostname" = "master"
+    "ip" = "192.168.122.100"
+    "name" = "master"
+  },
+  {
+    "hostname" = "slave1"
+    "ip" = "192.168.122.101"
+    "name" = "slave1"
+  },
+  {
+    "hostname" = "slave2"
+    "ip" = "192.168.122.102"
+    "name" = "slave2"
+  },
+]
+Debug: Terraform outputs
+ips = [
+  "192.168.122.100",
+  "192.168.122.101",
+  "192.168.122.102",
+]
+vm_details = [
+  {
+    "hostname" = "master"
+    "ip" = "192.168.122.100"
+    "name" = "master"
+  },
+  {
+    "hostname" = "slave1"
+    "ip" = "192.168.122.101"
+    "name" = "slave1"
+  },
+  {
+    "hostname" = "slave2"
+    "ip" = "192.168.122.102"
+    "name" = "slave2"
+  },
+]
+Debug: Raw IP addresses
+192.168.122.100
+192.168.122.101
+192.168.122.102
+Generated inventory file:
+[master]
+master ansible_host=192.168.122.100 ansible_user=ubuntu
+[slaves]
+slave1 ansible_host=192.168.122.101 ansible_user=ubuntu
+slave2 ansible_host=192.168.122.102 ansible_user=ubuntu
+Provisioning with Terraform completed. Inventory file for Ansible has been created at ansible/inventory/inventory.ini
+Waiting for VMs to initialize...
+Time remaining: 1 secondss
+VM wait time completed.
+[WARNING]: Found both group and host with same name: master
+
+PLAY [all] ***************************************************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+ok: [slave2]
+ok: [slave1]
+
+TASK [Checking SSH] ******************************************************************************************************************************************************************************************************************************************
+ok: [slave2]
+ok: [slave1]
+ok: [master]
+
+TASK [Configure and start SSH service] ***********************************************************************************************************************************************************************************************************************
+ok: [slave1]
+ok: [slave2]
+ok: [master]
+
+TASK [Set up .ssh directory for ubuntu user] *****************************************************************************************************************************************************************************************************************
+ok: [slave1]
+ok: [master]
+ok: [slave2]
+
+TASK [Generate SSH key on master node] ***********************************************************************************************************************************************************************************************************************
+skipping: [slave1]
+skipping: [slave2]
+changed: [master -> 192.168.122.100]
+
+TASK [Private SSH key from master node] **********************************************************************************************************************************************************************************************************************
+skipping: [slave1]
+skipping: [slave2]
+changed: [master -> 192.168.122.100]
+
+TASK [Public SSH key from master node] ***********************************************************************************************************************************************************************************************************************
+skipping: [slave1]
+skipping: [slave2]
+changed: [master -> 192.168.122.100]
+
+TASK [Distribute private SSH key to worker nodes] ************************************************************************************************************************************************************************************************************
+skipping: [master]
+changed: [slave2]
+changed: [slave1]
+
+TASK [Distribute public SSH key to worker nodes] *************************************************************************************************************************************************************************************************************
+skipping: [master]
+changed: [slave1]
+changed: [slave2]
+
+TASK [Set proper permissions for authorized_keys file] *******************************************************************************************************************************************************************************************************
+ok: [master]
+ok: [slave1]
+ok: [slave2]
+
+TASK [Enable passwordless SSH access across cluster] *********************************************************************************************************************************************************************************************************
+changed: [slave1]
+changed: [master]
+changed: [slave2]
+
+TASK [Access without password] *******************************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave2]
+changed: [slave1]
+
+TASK [Collect cluster node information for hosts file] *******************************************************************************************************************************************************************************************************
+ok: [master]
+ok: [slave1]
+ok: [slave2]
+
+TASK [Prepare host mapping entries] **************************************************************************************************************************************************************************************************************************
+ok: [master] => (item=0)
+ok: [master] => (item=1)
+ok: [master] => (item=2)
+ok: [slave1] => (item=0)
+ok: [slave1] => (item=1)
+ok: [slave1] => (item=2)
+ok: [slave2] => (item=0)
+ok: [slave2] => (item=1)
+ok: [slave2] => (item=2)
+
+TASK [Update /etc/hosts with cluster node mappings] **********************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave2]
+changed: [slave1]
+
+TASK [Install wget for software downloads] *******************************************************************************************************************************************************************************************************************
+ok: [master]
+ok: [slave1]
+ok: [slave2]
+
+TASK [Create directory for software installations] ***********************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave2]
+changed: [slave1]
+
+TASK [Download JDK 8u202] ************************************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave2]
+changed: [slave1]
+
+TASK [Download Hadoop 2.7.1] *********************************************************************************************************************************************************************************************************************************
+changed: [slave1]
+changed: [slave2]
+changed: [master]
+
+TASK [Download Spark 2.4.3] **********************************************************************************************************************************************************************************************************************************
+^[[H^[[Fchanged: [slave2]
+changed: [master]
+changed: [slave1]
+
+TASK [Extract JDK 8u202] *************************************************************************************************************************************************************************************************************************************
+changed: [slave1]
+changed: [slave2]
+changed: [master]
+
+TASK [Extract Hadoop 2.7.1] **********************************************************************************************************************************************************************************************************************************
+changed: [slave1]
+changed: [slave2]
+changed: [master]
+
+TASK [Extract Spark 2.4.3] ***********************************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave1]
+changed: [slave2]
+
+TASK [Set up environment variables in .bashrc] ***************************************************************************************************************************************************************************************************************
+changed: [slave1]
+changed: [master]
+changed: [slave2]
+
+TASK [Clean up JDK installation archive] *********************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave2]
+changed: [slave1]
+
+TASK [Clean up Hadoop installation archive] ******************************************************************************************************************************************************************************************************************
+changed: [slave1]
+changed: [master]
+changed: [slave2]
+
+TASK [Clean up Spark installation archive] *******************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave1]
+changed: [slave2]
+
+TASK [Set system-wide environment variables] *****************************************************************************************************************************************************************************************************************
+changed: [slave2] => (item=JAVA_HOME="/home/ubuntu/install/jdk1.8.0_202")
+changed: [slave1] => (item=JAVA_HOME="/home/ubuntu/install/jdk1.8.0_202")
+changed: [master] => (item=JAVA_HOME="/home/ubuntu/install/jdk1.8.0_202")
+changed: [slave1] => (item=HADOOP_HOME="/home/ubuntu/install/hadoop-2.7.1")
+changed: [master] => (item=HADOOP_HOME="/home/ubuntu/install/hadoop-2.7.1")
+changed: [slave2] => (item=HADOOP_HOME="/home/ubuntu/install/hadoop-2.7.1")
+changed: [master] => (item=SPARK_HOME="/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7")
+changed: [slave2] => (item=SPARK_HOME="/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7")
+changed: [slave1] => (item=SPARK_HOME="/home/ubuntu/install/spark-2.4.3-bin-hadoop2.7")
+changed: [slave2] => (item=BASH_ENV="/etc/profile.d/loaded_env.sh")
+changed: [master] => (item=BASH_ENV="/etc/profile.d/loaded_env.sh")
+changed: [slave1] => (item=BASH_ENV="/etc/profile.d/loaded_env.sh")
+changed: [slave1] => (item=ENV="/etc/profile.d/loaded_env.sh")
+changed: [master] => (item=ENV="/etc/profile.d/loaded_env.sh")
+changed: [slave2] => (item=ENV="/etc/profile.d/loaded_env.sh")
+
+TASK [Configure sudo access for ubuntu user] *****************************************************************************************************************************************************************************************************************
+changed: [slave2]
+changed: [master]
+changed: [slave1]
+
+TASK [Set ownership of installation directory] ***************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using the file module with owner rather than running 'chown'.  If you need to use command because file is insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this
+message.
+changed: [slave2]
+changed: [slave1]
+changed: [master]
+
+TASK [Set permissions for installation directory] ************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using the file module with mode rather than running 'chmod'.  If you need to use command because file is insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this
+message.
+changed: [master]
+changed: [slave2]
+changed: [slave1]
+
+TASK [Deploy environment setup script] ***********************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave1]
+changed: [slave2]
+
+TASK [Load environment setup script] *************************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave1]
+changed: [slave2]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=31   changed=23   unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+slave1                     : ok=30   changed=22   unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+slave2                     : ok=30   changed=22   unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Replace Hadoop anfilesuration files across all VMs] ****************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+ok: [slave2]
+ok: [slave1]
+
+TASK [Update JAVA_HOME in hadoop-env.sh] *********************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave1]
+changed: [slave2]
+
+TASK [Replace core-site.xml] *********************************************************************************************************************************************************************************************************************************
+changed: [slave2]
+changed: [slave1]
+changed: [master]
+
+TASK [Replace hdfs-site.xml] *********************************************************************************************************************************************************************************************************************************
+changed: [slave2]
+changed: [master]
+changed: [slave1]
+
+TASK [Replace Hadoop slaves file] ****************************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave1]
+changed: [slave2]
+
+TASK [Replace Spark slaves file] *****************************************************************************************************************************************************************************************************************************
+changed: [master]
+changed: [slave1]
+changed: [slave2]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=6    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+slave1                     : ok=6    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+slave2                     : ok=6    changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+Copying
+Warning: Permanently added '192.168.122.100' (ECDSA) to the list of known hosts.
+chmod.sh                                                                                                                                                                                                                    100%  196   267.3KB/s   00:00    
+copy.sh                                                                                                                                                                                                                     100%   89   244.2KB/s   00:00    
+filesample.txt                                                                                                                                                                                                              100% 1024     1.5MB/s   00:00    
+run.sh                                                                                                                                                                                                                      100%  177   316.3KB/s   00:00    
+stop.sh                                                                                                                                                                                                                     100%   46   159.2KB/s   00:00    
+WordCount.java                                                                                                                                                                                                              100% 1103     3.7MB/s   00:00    
+Count.java                                                                                                                                                                                                                  100% 1438     4.7MB/s   00:00    
+generate.sh                                                                                                                                                                                                                 100%  152   431.5KB/s   00:00    
+start.sh                                                                                                                                                                                                                    100%  151   712.4KB/s   00:00    
+comp.sh                                                                                                                                                                                                                     100%  208     1.0MB/s   00:00    
+Copy finished
+[WARNING]: Found both group and host with same name: master
+
+PLAY [First step of Ansible for master - give permission] ****************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Run chmod] *********************************************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using the file module with mode rather than running 'chmod'.  If you need to use command because file is insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this
+message.
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Give permission for neccesary sh file on master] *******************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Executing chmod commands] ******************************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Compile Java on master] ********************************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Run comp.sh] *******************************************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Execute start on master] *******************************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Execute start.sh] **************************************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Execute generate script on master] *********************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Execute generate.sh with dynamic file input] ***********************************************************************************************************************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Execute copy script on master] *************************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Execute copy.sh] ***************************************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Execute run.sh script on master] ***********************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Execute run.sh with dynamic jar file] ******************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+[WARNING]: Found both group and host with same name: master
+
+PLAY [Execute stop HDFS script on master] ********************************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [master]
+
+TASK [Execute stop.sh] ***************************************************************************************************************************************************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [master]
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+master                     : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+Waiting for Ansible responding
+Time remaining: 1 secondss
+VM wait time completed.
+Warning: Permanently added '192.168.122.100' (ECDSA) to the list of known hosts.
+part-00030                                                                                                                                                                                                                  100%   49    87.5KB/s   00:00    
+part-00002                                                                                                                                                                                                                  100%   75   161.7KB/s   00:00    
+part-00000                                                                                                                                                                                                                  100%  147   946.7KB/s   00:00    
+part-00015                                                                                                                                                                                                                  100%  123   615.8KB/s   00:00    
+part-00020                                                                                                                                                                                                                  100%  102   781.5KB/s   00:00    
+part-00021                                                                                                                                                                                                                  100%   65   500.9KB/s   00:00    
+part-00010                                                                                                                                                                                                                  100%   50   380.1KB/s   00:00    
+part-00025                                                                                                                                                                                                                  100%   57   456.6KB/s   00:00    
+part-00003                                                                                                                                                                                                                  100%   70   592.2KB/s   00:00    
+part-00023                                                                                                                                                                                                                  100%   33   293.9KB/s   00:00    
+part-00028                                                                                                                                                                                                                  100%   48   428.4KB/s   00:00    
+part-00014                                                                                                                                                                                                                  100%  104   914.5KB/s   00:00    
+part-00017                                                                                                                                                                                                                  100%   28   258.3KB/s   00:00    
+part-00007                                                                                                                                                                                                                  100%   19   183.4KB/s   00:00    
+part-00019                                                                                                                                                                                                                  100%   31   294.7KB/s   00:00    
+part-00031                                                                                                                                                                                                                  100%   33   311.6KB/s   00:00    
+part-00005                                                                                                                                                                                                                  100%   35   363.7KB/s   00:00    
+part-00012                                                                                                                                                                                                                  100%  106     1.1MB/s   00:00    
+part-00013                                                                                                                                                                                                                  100%   64   688.5KB/s   00:00    
+part-00001                                                                                                                                                                                                                  100%   96     1.0MB/s   00:00    
+part-00016                                                                                                                                                                                                                  100%   14   150.3KB/s   00:00    
+part-00022                                                                                                                                                                                                                  100%   76   908.2KB/s   00:00    
+part-00026                                                                                                                                                                                                                  100%   36   414.9KB/s   00:00    
+part-00009                                                                                                                                                                                                                  100%   51   633.3KB/s   00:00    
+part-00024                                                                                                                                                                                                                  100%   17   206.7KB/s   00:00    
+part-00027                                                                                                                                                                                                                  100%   48   603.8KB/s   00:00    
+part-00004                                                                                                                                                                                                                  100%   68   847.0KB/s   00:00    
+part-00006                                                                                                                                                                                                                  100%   97     1.2MB/s   00:00    
+part-00008                                                                                                                                                                                                                  100%   15   205.9KB/s   00:00    
+part-00011                                                                                                                                                                                                                  100%   66   907.9KB/s   00:00    
+part-00018                                                                                                                                                                                                                  100%   28   395.4KB/s   00:00    
+part-00029                                                                                                                                                                                                                  100%   18   255.2KB/s   00:00    
+_SUCCESS                                                                                                                                                                                                                    100%    0     0.0KB/s   00:00    
+Waiting for deprovision
+Time remaining: 1 secondss
+VM wait time completed.
+Current VM count: 3
+Destroying Terraform-managed resources...
+libvirt_pool.vm_pool: Refreshing state... [id=cb6199a1-2bff-437a-9a61-88b1440bb853]
+libvirt_volume.ubuntu_base_image: Refreshing state... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/ubuntu-22.04-server-cloudimg-amd64-disk-kvm.img]
+libvirt_cloudinit_disk.commoninit[0]: Refreshing state... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-0.iso;671665cf-e211-f07d-5660-675f95dd8f71]
+libvirt_cloudinit_disk.commoninit[2]: Refreshing state... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-2.iso;671665cf-f707-7131-5c70-824cfefbee0b]
+libvirt_cloudinit_disk.commoninit[1]: Refreshing state... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-1.iso;671665cf-334f-fe8b-dbbb-24849345cb12]
+libvirt_volume.vm_disk[0]: Refreshing state... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-0.qcow2]
+libvirt_volume.vm_disk[1]: Refreshing state... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-1.qcow2]
+libvirt_volume.vm_disk[2]: Refreshing state... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-2.qcow2]
+libvirt_domain.vm[2]: Refreshing state... [id=4d4e3a1d-3564-4a2d-a96a-eaf0a26ec438]
+libvirt_domain.vm[1]: Refreshing state... [id=5532233a-9557-4657-a2ad-542bd60b52a7]
+libvirt_domain.vm[0]: Refreshing state... [id=98954691-b8ee-497a-ae08-11e075e922a3]
+libvirt_domain.vm[1]: Destroying... [id=5532233a-9557-4657-a2ad-542bd60b52a7]
+libvirt_domain.vm[2]: Destroying... [id=4d4e3a1d-3564-4a2d-a96a-eaf0a26ec438]
+libvirt_domain.vm[0]: Destroying... [id=98954691-b8ee-497a-ae08-11e075e922a3]
+libvirt_domain.vm[0]: Destruction complete after 1s
+libvirt_domain.vm[2]: Destruction complete after 1s
+libvirt_domain.vm[1]: Destruction complete after 1s
+libvirt_cloudinit_disk.commoninit[1]: Destroying... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-1.iso;671665cf-334f-fe8b-dbbb-24849345cb12]
+libvirt_cloudinit_disk.commoninit[0]: Destroying... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-0.iso;671665cf-e211-f07d-5660-675f95dd8f71]
+libvirt_volume.vm_disk[0]: Destroying... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-0.qcow2]
+libvirt_volume.vm_disk[2]: Destroying... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-2.qcow2]
+libvirt_volume.vm_disk[1]: Destroying... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/vm-disk-1.qcow2]
+libvirt_cloudinit_disk.commoninit[2]: Destroying... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/cloudinit-2.iso;671665cf-f707-7131-5c70-824cfefbee0b]
+libvirt_cloudinit_disk.commoninit[0]: Destruction complete after 0s
+libvirt_cloudinit_disk.commoninit[1]: Destruction complete after 0s
+libvirt_volume.vm_disk[0]: Destruction complete after 0s
+libvirt_volume.vm_disk[1]: Destruction complete after 1s
+libvirt_cloudinit_disk.commoninit[2]: Destruction complete after 1s
+libvirt_volume.vm_disk[2]: Destruction complete after 1s
+libvirt_volume.ubuntu_base_image: Destroying... [id=/home/ubuntu/kvm-remote-host/kvm/pool1/ubuntu-22.04-server-cloudimg-amd64-disk-kvm.img]
+libvirt_volume.ubuntu_base_image: Destruction complete after 0s
+libvirt_pool.vm_pool: Destroying... [id=cb6199a1-2bff-437a-9a61-88b1440bb853]
+libvirt_pool.vm_pool: Destruction complete after 5s
+
+Destroy complete! Resources: 11 destroyed.
+Destruction complete. All resources have been removed.
+PROJECT COMPLETED
