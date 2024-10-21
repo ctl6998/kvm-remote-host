@@ -1,5 +1,11 @@
 #!/bin/bash
 
+
+########################
+#                      #
+# Initialize terrafomr#
+#			#
+########################
 # Enable error checking
 set -e
 
@@ -72,3 +78,104 @@ IP_LIST="${IP_LIST%,}]"
 )
 
 echo "Provisioning with Terraform completed. Inventory file for Ansible has been created at $HOSTS_FILE"
+
+
+#####################################################################################################
+echo "Sleep for waiting initialization of VMs"
+sleep 20  # Sleep for 20 seconds
+#####################################################################################################
+
+########################
+#                      #
+# Run Ansbile-playbooks#
+#			#
+########################
+
+cd ansible/
+
+
+
+
+ansible-playbook -i inventory/inventory.ini playbooks/playbook_install/setup.yml -u ubuntu --private-key ~/.ssh/id_rsa
+ansible-playbook -i inventory/inventory.ini playbooks/playbook_install/spork_run.yml -u ubuntu --private-key ~/.ssh/id_rsa
+
+echo "Copying"
+scp spark_files/chmod.sh spark_files/copy.sh spark_files/filesample.txt spark_files/run.sh spark_files/stop.sh spark_files/WordCount.java spark_files/Count.java spark_files/generate.sh spark_files/start.sh spark_files/comp.sh ubuntu@192.168.122.100:/home/ubuntu/
+echo "Copy finished"
+
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/first_step.yml 
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/chmod_accept.yml
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_compsh.yml
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_startsh.yml
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_generatesh.yml
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_copysh.yml
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_runsh.yml
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_stopsh.yml
+
+#####################################################################################################
+sleep 10  # Sleep for 10 seconds
+#####################################################################################################
+
+########################
+#                      #
+#    Copy output to    #
+#     control node	#
+########################
+
+scp -r ubuntu@192.168.122.100:/home/ubuntu/output_SparkWC /home/ubuntu/kvm-remote-host
+
+
+
+
+#####################################################################################################
+sleep 10  # Sleep for 10 seconds
+#####################################################################################################
+
+
+########################
+#                      #
+#    End terraform     #
+#              	#
+########################
+
+# Enable error checking
+set -e
+
+# Check if the script is run from the correct directory
+if [[ $(basename "$PWD") != "kvm-remote-host" ]]; then
+    echo "Error: This script must be run from the kvm-remote-host directory."
+    exit 1
+fi
+
+# Set the hosts.ini file location
+HOSTS_FILE="ansible/inventory/inventory.ini"
+
+# Confirm before destroying
+read -p "Are you sure you want to destroy all resources? This action cannot be undone. (y/n) " -n 1 -r
+echo    # Move to a new line
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    echo "Operation cancelled."
+    exit 1
+fi
+
+# Terraform
+(
+    cd terraform || exit
+    echo "Destroying Terraform-managed resources..."
+    terraform destroy -auto-approve
+)
+
+# Check if hosts.ini exists and remove it
+if [ -f "$HOSTS_FILE" ]; then
+    echo "Removing inventory file..."
+    rm "$HOSTS_FILE"
+fi
+
+echo "Destruction complete. All resources have been removed."
+
+################################################END##################################################
+
+echo "PROJECT COMPLETED"
+
+

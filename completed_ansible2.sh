@@ -19,9 +19,9 @@ echo "Copy finished"
 ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/first_step.yml 
 ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/chmod_accept.yml
 ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_compsh.yml
-ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_copy.yml
 ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_startsh.yml
 ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_generatesh.yml
+ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_copysh.yml
 ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_runsh.yml
 ansible-playbook -i inventory/inventory.ini playbooks/playbooks_spark/spark_stopsh.yml
 
