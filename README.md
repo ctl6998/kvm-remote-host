@@ -4,7 +4,7 @@ We implemented an infrastructure service for the automatic deployment of a Big D
 ## Group Information
 **Group 2:**
 - Le Chi Thanh
-- Nguyen Ngoc Hai 
+- Nguyen Ngoc Hai M23.ICT.004
 - Nguyen Thanh Do
 
 ## How to Run
